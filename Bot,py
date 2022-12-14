@@ -1,0 +1,101 @@
+import discord
+
+# ID del canal donde el bot va a clonar los mensajes
+ORIGEN_CHANNEL_ID = "11111111"
+
+# ID del canal al que el bot va a enviar los mensajes clonados
+DESTINO_CHANNEL_ID = "222222222222"
+
+# token de la API de Discord
+TOKEN = "TOKEN BOT"
+
+intents = discord.Intents.all()
+client = discord.Client(intents=intents)
+
+# Agrega un mensaje de confirmación cuando el bot clona un mensaje
+@client.event
+async def on_ready():
+    print("Bot conectado al servidor")
+    origen_channel = client.get_channel(ORIGEN_CHANNEL_ID)
+    destino_channel = client.get_channel(DESTINO_CHANNEL_ID)
+
+# Agrega una comprobación antes de ejecutar el proceso de clonación para asegurarse de que los canales de origen y destino son diferentes
+    if ORIGEN_CHANNEL_ID != DESTINO_CHANNEL_ID:
+        async for message in origen_channel.history(limit=None):
+            try:
+                await destino_channel.send(message.content)
+                await destino_channel.send("Mensaje clonado exitosamente")
+            except:
+                await destino_channel.send("Error al clonar el mensaje")
+    else:
+        await message.channel.send("Los canales de origen y destino son el mismo. Por favor, selecciona canales diferentes.")
+
+# Agrega un mensaje de confirmación cuando el bot se desconecta del servidor
+@client.event
+async def on_disconnect():
+    print("Bot desconectado del servidor")
+
+# Agrega un mensaje de confirmación si el bot no recibe ningún mensaje durante un cierto tiempo
+@client.event
+async def on_message(message): 
+    if message.author == client.user:
+        return
+    else:
+        print("Nuevo mensaje recibido")
+    # Agrega un mensaje de confirmación si el bot recibe un mensaje con el comando 'clonar'
+    if message.content == "clonar":
+        await message.channel.send("Mensajes clonados exitosamente")
+
+# Agrega una función para clonar mensajes desde varios canales
+    elif message.content.startswith("clonar_varios"):
+        try:
+            lista_canales = message.content.split(" ")[1:]
+            for canal in lista_canales:
+                canal = client.get_channel(canal)
+                if ORIGEN_CHANNEL_ID != canal.id:
+                    async for message in canal.history(limit=None):
+                        try:
+                            await destino_channel.send(message.content)
+                            await destino_channel.send("Mensaje clonado exitosamente")
+                        except:
+                            await destino_channel.send("Error al clonar el mensaje")
+                else:
+                    await message.channel.send("El canal de origen y destino son el mismo. Por favor, selecciona canales diferentes.")
+        except:
+            await message.channel.send("Error al clonar los mensajes")
+
+# Agrega una función para eliminar mensajes clonados
+    elif message.content == "eliminar_clonados":
+        async for message in destino_channel.history(limit=None):
+            if message.content == "Mensaje clonado exitosamente":
+                await message.delete()
+
+# Agrega una función para clonar mensajes desde un canal determinado por el usuario
+    elif message.content.startswith("clonar_canal"):
+        canal_id = message.content.split(" ")[1]
+        canal = client.get_channel(canal_id)
+        if ORIGEN_CHANNEL_ID != canal.id:
+            async for message in canal.history(limit=None):
+                try:
+                    await destino_channel.send(message.content)
+                    await destino_channel.send("Mensaje clonado exitosamente")
+                except:
+                    await destino_channel.send("Error al clonar el mensaje")
+        else:
+            await message.channel.send("El canal de origen y destino son el mismo. Por favor, selecciona canales diferentes.")   
+            
+# Agrega una función para clonar archivos desde un canal determinado por el usuario
+    elif message.content.startswith("clonar_archivo"):
+        canal_id = message.content.split(" ")[1]
+        canal = client.get_channel(canal_id)
+        if ORIGEN_CHANNEL_ID != canal.id:
+            async for message in canal.history(limit=None):
+                try:
+                    await destino_channel.send(file=message.attachments[0])
+                    await destino_channel.send("Archivo clonado exitosamente")
+                except:
+                    await destino_channel.send("Error al clonar el archivo")
+        else:
+            await message.channel.send("El canal de origen y destino son el mismo. Por favor, selecciona canales diferentes.")           
+   
+client.run(TOKEN)
